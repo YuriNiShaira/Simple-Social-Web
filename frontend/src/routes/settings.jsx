@@ -17,15 +17,6 @@ const Settings = () => {
 
     const nav = useNavigate();
 
-    const handleLogout = async () => {
-        try {
-            await logout();
-            nav('/login')
-        } catch {
-            alert ('error logging out')
-        }
-    }
-
     const handleUpdate = async () => {
         try {
             await update_user({"username":username, "profile_image": profileImage, "email":email, "first_name":firstName, "last_name":lastName, "bio":bio})
@@ -65,8 +56,6 @@ const Settings = () => {
                     </FormControl>
                     <Button onClick={handleUpdate} w='100%' colorScheme="blue" mt='10px'>Save changes</Button>
                 </VStack>
-
-                <Button onClick={handleLogout} colorScheme="red">Logout</Button>
             </VStack>
         </Flex>
     )
