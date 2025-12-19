@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import MyUser, Post
+from .models import MyUser, Post, Comment
 
 class UserRegisterSerializer(serializers.ModelSerializer):
 
@@ -60,3 +60,12 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
         fields = ['username', 'bio', 'email', 'profile_image', 'first_name', 'last_name'] 
+
+class CommentSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    user_profile_image = serializers.CharField(source='user.profile_image', read_only=True)
+    
+    class Meta:
+        model = Comment
+        fields = ['id', 'post', 'user', 'username', 'user_profile_image', 'text', 'created_at']
+        read_only_fields = ['user', 'created_at']

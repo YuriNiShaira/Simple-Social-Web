@@ -103,3 +103,13 @@ export const update_user = async (values) => {
     const response = await api.patch('/update_user/', values, {headers: {'Content-Type': 'multipart/form-data'}} )
     return response.data
 }
+
+export const create_comment = async (post_id, text) => {
+    const response = await api.post('/create_comment/', {post_id, text})
+    return response.data
+}
+
+export const get_comments = async (post_id) => {
+    const response = await api.get(`/comments/${post_id}/`)
+    return response.data
+}

@@ -22,4 +22,6 @@ urlpatterns = [
     path('search/', views.search_user, name='search_user'),
     path('update_user/', views.update_user_details, name='update_user'),
     path('logout/', views.logout, name='logout'),
+    path('create_comment/', views.create_comment, name='create_comment'),
+    path('comments/<int:post_id>/', views.get_comments, name='get_comments'),
 ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

@@ -7,8 +7,8 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 
-from .models import MyUser, Post
-from .serializer import MyUserProfileSerializer, UserRegisterSerializer, PostSerializer, UserSerializer
+from .models import MyUser, Post, Comment
+from .serializer import MyUserProfileSerializer, UserRegisterSerializer, PostSerializer, UserSerializer, CommentSerializer
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -286,3 +286,36 @@ def logout(request):
     except:
         return Response({"success":False})
     
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_comment(request):
+    try:
+        #Find the post
+        try:
+            post = Post.objects.get(id=request.data['post_id'])
+        except Post.DoesNotExist:
+            return Response({'error': 'Post not found'}, status=404)
+        
+         #Create the comment
+        comment = Comment.objects.create(
+            post=post,           # Link to post
+            user=request.user,   # Current logged in user
+            text=request.data['text']  # Comment text from frontend
+        )
+
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    except:
+        return Response({'error':'Failed to create comment'})
+    
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_comments(request, post_id):
+    try:
+        comments = Comment.objects.filter(post_id=post_id).order_by('-created_at')
+
+        serializer = CommentSerializer(comments, many=True)
+
+        return Response(serializer.data)
+    except:
+        return Response({'error':'Failed to get comment'})
