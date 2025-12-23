@@ -7,8 +7,21 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 
-from .models import MyUser, Post, Comment
-from .serializer import MyUserProfileSerializer, UserRegisterSerializer, PostSerializer, UserSerializer, CommentSerializer
+from .models import MyUser, Post, Comment, Notification
+from .serializer import MyUserProfileSerializer, UserRegisterSerializer, PostSerializer, UserSerializer, CommentSerializer, NotificationSerializer
+
+def create_notification(user, from_user, notification_type, post=None, comment=None):
+    """
+    Helper function to create notifications
+    Called from other views (like, comment, follow)
+    """
+    Notification.objects.create(
+        user=user,
+        from_user=from_user,
+        notification_type=notification_type,
+        post=post,
+        comment=comment
+    )
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -146,6 +159,15 @@ def toggleFollow(request):
             return Response({'now_following':False})
         else:
             user_to_follow.followers.add(my_user)
+            
+            # ✅ CREATE NOTIFICATION FOR FOLLOW
+            create_notification(
+                user=user_to_follow,     # Person being followed
+                from_user=my_user,       # Person who followed
+                notification_type='follow'
+                # No post/comment for follow notifications
+            )
+            
             return Response({'now_following':True})
     except:
         return Response({'error':'error following user'})
@@ -198,6 +220,16 @@ def toggleLike(request):
             return Response({'now_liked': False})
         else:
             post.likes.add(user)
+            
+            # ✅ CREATE NOTIFICATION FOR LIKE
+            if post.user != user:  # Don't notify yourself
+                create_notification(
+                    user=post.user,          # Post owner gets notified
+                    from_user=user,          # Person who liked
+                    notification_type='like',
+                    post=post
+                )
+            
             return Response({'now_liked': True})
     except:
         return Response({'error':'failed to like post'})
@@ -290,23 +322,32 @@ def logout(request):
 @permission_classes([IsAuthenticated])
 def create_comment(request):
     try:
-        #Find the post
         try:
             post = Post.objects.get(id=request.data['post_id'])
         except Post.DoesNotExist:
             return Response({'error': 'Post not found'}, status=404)
         
-         #Create the comment
         comment = Comment.objects.create(
-            post=post,           # Link to post
-            user=request.user,   # Current logged in user
-            text=request.data['text']  # Comment text from frontend
+            post=post,
+            user=request.user,
+            text=request.data['text']
         )
-
+        
+        # ✅ CREATE NOTIFICATION FOR COMMENT
+        if post.user != request.user:  # Don't notify yourself
+            create_notification(
+                user=post.user,          # Post owner gets notified
+                from_user=request.user,  # Person who commented
+                notification_type='comment',
+                post=post,
+                comment=comment
+            )
+        
         serializer = CommentSerializer(comment)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=201)
+        
     except:
-        return Response({'error':'Failed to create comment'})
+        return Response({'error': 'Failed to create comment'}, status=400)
     
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -319,3 +360,33 @@ def get_comments(request, post_id):
         return Response(serializer.data)
     except:
         return Response({'error':'Failed to get comment'})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_notifications(request):
+    try:
+        # Get notifications for logged in user, newest first
+        notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+        
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data)
+        
+    except:
+        return Response({'error': 'Failed to get notifications'}, status=400)
+    
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def mark_notification_read(request, notification_id):
+    try:
+        notification = Notification.objects.get(id=notification_id, user=request.user)
+        
+        notification.is_read = True
+        notification.save()
+        
+        return Response({'success': True})
+        
+    except Notification.DoesNotExist:
+        return Response({'error': 'Notification not found'}, status=404)
+    except:
+        return Response({'error': 'Failed to mark as read'}, status=400)

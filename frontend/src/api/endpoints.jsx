@@ -113,3 +113,13 @@ export const get_comments = async (post_id) => {
     const response = await api.get(`/comments/${post_id}/`)
     return response.data
 }
+
+export const get_notifications = async () => {
+    const response = await api.get('/notifications/')
+    return response.data
+}
+
+export const mark_notification_read = async (notification_id) => {
+    const response = await api.post(`/notifications/${notification_id}/read/`)
+    return response.data
+}

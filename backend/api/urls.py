@@ -24,4 +24,6 @@ urlpatterns = [
     path('logout/', views.logout, name='logout'),
     path('create_comment/', views.create_comment, name='create_comment'),
     path('comments/<int:post_id>/', views.get_comments, name='get_comments'),
+    path('notifications/', views.get_notifications, name='get_notifications'),
+    path('notifications/<int:notification_id>/read/', views.mark_notification_read, name='mark_notification_read'),
 ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

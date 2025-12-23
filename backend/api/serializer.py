@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import MyUser, Post, Comment
+from .models import MyUser, Post, Comment, Notification
 
 class UserRegisterSerializer(serializers.ModelSerializer):
 
@@ -69,3 +69,13 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ['id', 'post', 'user', 'username', 'user_profile_image', 'text', 'created_at']
         read_only_fields = ['user', 'created_at']
+
+class NotificationSerializer(serializers.ModelSerializer):
+    from_username = serializers.CharField(source='from_user.username', read_only=True)
+    from_user_profile = serializers.CharField(source='from_user.profile_image', read_only=True)
+    post_id = serializers.IntegerField(source='post.id', read_only=True, allow_null=True)
+
+    class Meta:
+        model = Notification
+        fields = ['id', 'from_username', 'from_user_profile', 'notification_type','post_id', 'is_read', 'created_at']
+        read_only_fields = ['is_read', 'created_at']
