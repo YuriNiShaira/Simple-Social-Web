@@ -177,28 +177,26 @@ def toggleFollow(request):
 @permission_classes([IsAuthenticated])
 def get_user_posts(request, pk):
     try:
-        user = MyUser.objects.get(username = pk)
-        my_user = MyUser.objects.get(username = request.user.username)
+        user = MyUser.objects.get(username = request.user.username)
     except MyUser.DoesNotExist:
-        return Response({'error':'User does not exist'})
-    
+        return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        
     posts = user.posts.all().order_by('-created_at')
 
-    serializer = PostSerializer(posts, many=True)
+    serializer = PostSerializer(posts, many = True, context = {'request': request})
 
     data = []
-
     for post in serializer.data:
         new_post = {}
-
-        if my_user.username in post['likes']:
+            
+        if user.username in post['likes']:
             new_post = {**post, 'liked':True}
         else:
             new_post = {**post, 'liked': False}
         data.append(new_post)
-
-
+        
     return Response(data)
+                                 
 
 
 @api_view(['POST'])
@@ -239,45 +237,61 @@ def toggleLike(request):
 @permission_classes([IsAuthenticated])
 def create_post(request):
     try:
-        data = request.data
-
         try:
-            user = MyUser.objects.get(username = request.user.username)
+            user = MyUser.objects.get(username=request.user.username)
         except MyUser.DoesNotExist:
-            return Response({'error':'User does not exist'})
+            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
         
-        post = Post.objects.create(user = user, description = data['description'])
-        
-        serializer = PostSerializer(post, many = False)
+        description = request.data.get('description', '')
+        image = request.FILES.get('image')
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if not description.strip():
+            return Response({'error': 'Description is required'}, status=status.HTTP_400_BAD_REQUEST)
         
-    except:
-        return Response({'error':'Failed to create post'})
+        post = Post.objects.create(user = user, description=description.strip())
+
+        if image:
+            if image.size > 5 * 1024 * 1024:  # 5MB in bytes
+                return Response({'error': 'Image size should be less than 5MB'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+            file_extention = image.name.split('.')[-1].lower()
+
+            if file_extention not in allowed_extensions:
+                return Response({'error': f'File type not allowed. Allowed: {", ".join(allowed_extensions)}'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            post.image = image
+            post.save()
+
+        serializer = PostSerializer(post, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        print(f"Error creating post:{str(e)}")
+        return Response({'error': 'Failed to create post'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
     
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_post(request):
     try:
-        my_user = MyUser.objects.get(username = request.user.username)
+        my_user = MyUser.objects.get(username=request.user.username)
     except MyUser.DoesNotExist:
-        return Response({'error':'user does not exist'})
+        return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
     
     posts = Post.objects.all().order_by('-created_at')
-
-    serializer = PostSerializer(posts, many = True)
+    serializer = PostSerializer(posts, many = True, context={'request':request})
 
     data = []
-
     for post in serializer.data:
         new_post = {}
 
-        if my_user in post['likes']:
-            new_post = {**post, 'liked':True}
+        if my_user.username in post['likes']:
+            new_post = {**post, 'liked': True}
         else:
-            new_post = {**post, 'liked':False}
+            new_post = {**post, 'liked': False}
         data.append(new_post)
-        
+
     return Response(data)
 
 @api_view(['GET'])
