@@ -48,7 +48,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = [ 'id', 'username', 'description', 'formatted_date', 'likes', 'like_count', 'image', 'image_url', 'has_image',]
+        fields = [ 'id', 'username', 'description', 'formatted_date', 'likes', 'like_count', 'image_url', 'has_image',]
 
     def get_username(self, obj):
         return obj.user.username
@@ -63,7 +63,12 @@ class PostSerializer(serializers.ModelSerializer):
         if obj.image:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.image.url)
+                # Get base URL without /api/ duplication
+                base_url = request.build_absolute_uri('/')
+                # Remove trailing slash if exists
+                base_url = base_url.rstrip('/')
+                # Build correct URL
+                return f"{base_url}{obj.image.url}"
             return obj.image.url
         return None
     

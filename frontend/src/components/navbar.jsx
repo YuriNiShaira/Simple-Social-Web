@@ -1,18 +1,18 @@
 import { Flex, HStack, Text, Box, VStack, Button } from "@chakra-ui/react"
 import { useNavigate } from "react-router-dom"
-import { GoPerson } from "react-icons/go";
-import { MdPostAdd } from "react-icons/md";
-import { AiOutlineHome } from "react-icons/ai";
-import { LuUserRoundSearch } from "react-icons/lu";
-import { GrUserSettings } from "react-icons/gr";
-import { IoIosNotificationsOutline } from "react-icons/io";
-import { useState, useEffect } from "react";  // ✅ Add these
-import { get_notifications, mark_notification_read, logout } from "../api/endpoints";  // ✅ Import
+import { GoPerson } from "react-icons/go"
+import { MdPostAdd } from "react-icons/md"
+import { AiOutlineHome } from "react-icons/ai"
+import { LuUserRoundSearch } from "react-icons/lu"
+import { IoIosNotificationsOutline } from "react-icons/io"
+import { useState, useEffect } from "react"
+import { get_notifications, mark_notification_read, logout } from "../api/endpoints"
 
 const Navbar = () => {
     const nav = useNavigate()
-    const [notifications, setNotifications] = useState([])  // ✅ State for notifications
-    const [showNotifications, setShowNotifications] = useState(false)  // ✅ Toggle dropdown
+
+    const [notifications, setNotifications] = useState([])
+    const [showNotifications, setShowNotifications] = useState(false)
 
     const handleNavigate = (route) => {
         nav(`/${route}`)
@@ -21,97 +21,101 @@ const Navbar = () => {
     const handleNavigateUser = () => {
         const userData = JSON.parse(localStorage.getItem('userData') || '{}')
         const username = userData.username
-        
-        if (username) {
-            nav(`/${username}`)
-        } else {
-            nav('/login')
-        }
+
+        if (username) nav(`/${username}`)
+        else nav('/login')
     }
 
-    // ✅ Load notifications
     const loadNotifications = async () => {
         try {
             const data = await get_notifications()
             setNotifications(data)
-        } catch (error) {
-            console.error("Failed to load notifications:", error)
+        } catch (err) {
+            console.error("Failed to load notifications", err)
         }
     }
 
-    // ✅ Mark notification as read and navigate
     const handleNotificationClick = async (notification) => {
         try {
             await mark_notification_read(notification.id)
-            
-            // Remove from local state
             setNotifications(prev => prev.filter(n => n.id !== notification.id))
-            
-            // Navigate based on notification type
+
             if (notification.notification_type === 'follow') {
                 nav(`/${notification.from_username}`)
-            } else if (notification.post_id) {
-                // Could navigate to post, but for now go to home
+            } else {
                 nav('/')
             }
-            
-        } catch (error) {
-            console.error("Failed to mark notification read:", error)
+        } catch (err) {
+            console.error("Failed to mark notification read", err)
         }
     }
 
-    // ✅ Load notifications on component mount
     useEffect(() => {
         loadNotifications()
     }, [])
 
-    // ✅ Count unread notifications
     const unreadCount = notifications.filter(n => !n.is_read).length
 
     const handleLogout = async () => {
         try {
-            await logout();
+            await logout()
             nav('/login')
         } catch {
-            alert ('error logging out')
+            alert('error logging out')
         }
     }
 
     return (
-        <Flex w='100vw' h='90px' bg='blue.600' justifyContent='center' alignItems="center">
-            <HStack w='90%' justifyContent='space-between' color='white' >
-                <Text fontSize='24px' fontWeight='bold' fontFamily='fantasy' >Shaira's Hub</Text>
-                <HStack gap='20px'>
-                    <VStack mb='20px'>
-                        <Text fontWeight='bold'>Profile</Text>
-                        <Text title="Go to Profile" cursor='pointer' onClick={handleNavigateUser}><GoPerson size='25px' /></Text>
-                    </VStack>
-                    <VStack mb='20px'>
-                        <Text fontWeight='bold'>Post</Text>
-                        <Text title="Create Post" cursor='pointer' onClick={() => handleNavigate('create_post')}><MdPostAdd size='25px' /></Text>
-                    </VStack>
-                    <VStack mb='20px'>
-                        <Text fontWeight='bold'>Feed</Text>
-                        <Text title="Timeline" cursor='pointer' onClick={() => handleNavigate('')}><AiOutlineHome size='25px' /></Text>
-                    </VStack>
-                    <VStack mb='20px'>
-                        <Text fontWeight='bold'>Search</Text>
-                        <Text title="Search User" cursor='pointer' onClick={() => handleNavigate('search')}><LuUserRoundSearch size='25px' /></Text>
+        <Flex w="100vw" h="90px" bg="pink" justifyContent="center" alignItems="center">
+            <HStack w="90%" justifyContent="space-between" color="black">
+                
+                <Text fontSize="40px" fontWeight="bold" fontFamily="fantasy">
+                    Shaira's Hub
+                </Text>
+
+                <HStack gap="20px">
+                    
+                    <VStack mb="20px">
+                        <Text fontWeight="bold">Profile</Text>
+                        <Box cursor="pointer" title="Go to Profile" onClick={handleNavigateUser}>
+                            <GoPerson size="25px" />
+                        </Box>
                     </VStack>
 
-                    {/* ✅ NOTIFICATION BELL */}
+                    <VStack mb="20px">
+                        <Text fontWeight="bold">Post</Text>
+                        <Box cursor="pointer" title="Create Post" onClick={() => handleNavigate('create_post')}>
+                            <MdPostAdd size="25px" />
+                        </Box>
+                    </VStack>
+
+                    <VStack mb="20px">
+                        <Text fontWeight="bold">Feed</Text>
+                        <Box cursor="pointer" title="Timeline" onClick={() => handleNavigate('')}>
+                            <AiOutlineHome size="25px" />
+                        </Box>
+                    </VStack>
+
+                    <VStack mb="20px">
+                        <Text fontWeight="bold">Search</Text>
+                        <Box cursor="pointer" title="Search User" onClick={() => handleNavigate('search')}>
+                            <LuUserRoundSearch size="25px" />
+                        </Box>
+                    </VStack>
+
+                    {/* 🔔 NOTIFICATIONS */}
                     <Box position="relative">
-                        <VStack mb='14px'>
-                            <Text fontWeight='bold'>Notif</Text>
-                            <Text 
-                                cursor='pointer' 
-                                onClick={() => setShowNotifications(!showNotifications)}
-                                title="Show notifications"
+                        <VStack mb="14px">
+                            <Text fontWeight="bold">Notif</Text>
+
+                            <Box
+                                cursor="pointer"
                                 position="relative"
+                                title="Show notifications"
+                                onClick={() => setShowNotifications(!showNotifications)}
                             >
-                                <IoIosNotificationsOutline  size='31px' />
-                        
-                                {/* Unread badge */}
+                                <IoIosNotificationsOutline size="31px" />
+
                                 {unreadCount > 0 && (
                                     <Box
                                         position="absolute"
@@ -130,10 +134,9 @@ const Navbar = () => {
                                         {unreadCount}
                                     </Box>
                                 )}
-                            </Text>
+                            </Box>
                         </VStack>
-                        
-                        {/* ✅ NOTIFICATION DROPDOWN */}
+
                         {showNotifications && (
                             <Box
                                 position="absolute"
@@ -152,30 +155,30 @@ const Navbar = () => {
                                     <Text p={3} fontWeight="bold" borderBottom="1px solid" borderColor="gray.200">
                                         Notifications ({notifications.length})
                                     </Text>
-                                    
+
                                     {notifications.length > 0 ? (
-                                        notifications.map((notification) => (
+                                        notifications.map((n) => (
                                             <Box
-                                                key={notification.id}
+                                                key={n.id}
                                                 p={3}
                                                 borderBottom="1px solid"
                                                 borderColor="gray.100"
                                                 cursor="pointer"
-                                                bg={notification.is_read ? "white" : "blue.50"}
+                                                bg={n.is_read ? "white" : "blue.50"}
                                                 _hover={{ bg: "gray.50" }}
-                                                onClick={() => handleNotificationClick(notification)}
+                                                onClick={() => handleNotificationClick(n)}
                                             >
                                                 <Text fontSize="sm">
                                                     <Text as="span" fontWeight="bold">
-                                                        @{notification.from_username}
-                                                    </Text>
-                                                    {" "}
-                                                    {notification.notification_type === 'like' && 'liked your post'}
-                                                    {notification.notification_type === 'comment' && 'commented on your post'}
-                                                    {notification.notification_type === 'follow' && 'started following you'}
+                                                        @{n.from_username}
+                                                    </Text>{" "}
+                                                    {n.notification_type === 'like' && 'liked your post'}
+                                                    {n.notification_type === 'comment' && 'commented on your post'}
+                                                    {n.notification_type === 'follow' && 'started following you'}
                                                 </Text>
+
                                                 <Text fontSize="xs" color="gray.500" mt={1}>
-                                                    {new Date(notification.created_at).toLocaleDateString()}
+                                                    {new Date(n.created_at).toLocaleDateString()}
                                                 </Text>
                                             </Box>
                                         ))
@@ -189,9 +192,9 @@ const Navbar = () => {
                         )}
                     </Box>
 
-                    
-
-                    <Button onClick={handleLogout} colorScheme="red">Logout</Button>
+                    <Button onClick={handleLogout} colorScheme="red">
+                        Logout
+                    </Button>
 
                 </HStack>
             </HStack>

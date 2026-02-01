@@ -177,24 +177,25 @@ def toggleFollow(request):
 @permission_classes([IsAuthenticated])
 def get_user_posts(request, pk):
     try:
-        user = MyUser.objects.get(username = request.user.username)
+        user = MyUser.objects.get(username = pk)
+        my_user = MyUser.objects.get(username = request.user.username)
     except MyUser.DoesNotExist:
-        return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
-        
+        return Response({'error':'User does not exist'})
+    
     posts = user.posts.all().order_by('-created_at')
-
-    serializer = PostSerializer(posts, many = True, context = {'request': request})
-
+    
+    serializer = PostSerializer(posts, many=True, context={'request': request})
+    
     data = []
     for post in serializer.data:
         new_post = {}
-            
-        if user.username in post['likes']:
+        
+        if my_user.username in post['likes']:
             new_post = {**post, 'liked':True}
         else:
             new_post = {**post, 'liked': False}
         data.append(new_post)
-        
+    
     return Response(data)
                                  
 

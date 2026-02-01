@@ -54,7 +54,7 @@ const Settings = () => {
                         <FormLabel>Bio</FormLabel>
                         <Textarea onChange={(e) => setBio(e.target.value)} value={bio} bg='white' type='text' />
                     </FormControl>
-                    <Button onClick={handleUpdate} w='100%' colorScheme="blue" mt='10px'>Save changes</Button>
+                    <Button onClick={handleUpdate} w='100%' colorScheme="ff5983ff" mt='10px'>Save changes</Button>
                 </VStack>
             </VStack>
         </Flex>

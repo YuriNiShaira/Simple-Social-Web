@@ -134,12 +134,10 @@ const UserDetails = ({username}) => {
 }
 
 const UserPosts = ({username}) => {
-
     const [posts, setPosts] = useState([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-
         const fetchPosts = async () => {
             try {
                 const posts = await get_users_posts(username)
@@ -151,7 +149,6 @@ const UserPosts = ({username}) => {
             }
         }
         fetchPosts()
-
     }, [])
 
     return (
@@ -160,17 +157,11 @@ const UserPosts = ({username}) => {
                 <Text>Loading...</Text>
             :
                 posts.map((post) => {
-                    return <Post key={post.id} id={post.id} username={post.username} description={post.description} formatted_date={post.formatted_date} liked={post.liked} like_count={post.like_count} />
+                    return <Post key={post.id} {...post} /> // ✅ Spread all props
                 })
             }
         </Flex>
     )
 }
-
-
-
-
-
-
 
 export default UserProfile
