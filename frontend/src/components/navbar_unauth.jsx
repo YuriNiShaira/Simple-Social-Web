@@ -3,7 +3,7 @@ const Navbar_Unauth = () => {
 
 
     return (
-        <Flex w='100vw' h='90px' bg='blue.600' justifyContent='center' alignItems="center">
+        <Flex w='100vw' h='90px' bg='pink' justifyContent='center' alignItems="center">
             <HStack w='90%' justifyContent='space-between' color='white' >
                 <Text fontSize='24px' fontWeight='bold' fontFamily='fantasy' >Shaira's Hub</Text>
             </HStack>
