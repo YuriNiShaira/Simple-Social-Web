@@ -66,7 +66,7 @@ const Navbar = () => {
     }
 
     return (
-        <Flex w="100vw" h="90px" bg="pink" justifyContent="center" alignItems="center">
+        <Flex w="100vw" h="90px" bg="pink" justifyContent="center" alignItems="center" position="sticky" top="0" zIndex="1000">
             <HStack w="90%" justifyContent="space-between" color="black">
                 
                 <Text fontSize="40px" fontWeight="bold" fontFamily="fantasy">
